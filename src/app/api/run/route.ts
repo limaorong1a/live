@@ -4,6 +4,7 @@ import { getUser } from "@/lib/auth";
 import { chatStream, type ChatMessage } from "@/lib/llm";
 import { renderTemplate, type InputField } from "@/lib/skills";
 import { rateLimit } from "@/lib/ratelimit";
+import { moderateInputs } from "@/lib/moderation";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -48,6 +49,11 @@ export async function POST(req: Request) {
         { status: 400 }
       );
     }
+  }
+
+  const moderationError = moderateInputs(inputs);
+  if (moderationError) {
+    return NextResponse.json({ error: moderationError }, { status: 400 });
   }
 
   if (user.credits < skill.costCredits) {

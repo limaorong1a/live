@@ -36,6 +36,20 @@ export default async function HomePage() {
             我是专业者，想上架自己的技能 →
           </Link>
         </p>
+        <div className="mx-auto mt-6 grid max-w-2xl gap-3 text-left sm:grid-cols-3">
+          {[
+            { step: "①", title: "注册领积分", desc: "免费注册即送 20 体验积分" },
+            { step: "②", title: "挑一个技能", desc: "填入你的内容，点开始生成" },
+            { step: "③", title: "秒拿结果", desc: "满意就复制走，失败自动退积分" },
+          ].map((s) => (
+            <div key={s.step} className="card !p-4">
+              <p className="text-sm font-semibold text-slate-900">
+                {s.step} {s.title}
+              </p>
+              <p className="mt-1 text-xs text-slate-500">{s.desc}</p>
+            </div>
+          ))}
+        </div>
       </section>
 
       <SkillExplorer skills={cards} />

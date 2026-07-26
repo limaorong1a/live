@@ -93,10 +93,30 @@ src/
 
 ## 部署
 
-任何支持 Node.js 的服务器均可（国内建议阿里云/腾讯云轻量服务器）：
+任何支持 Node.js 的服务器均可（国内建议阿里云/腾讯云轻量服务器）。
+
+**方式一：PM2（推荐新手）**
 
 ```bash
-npm run build && npm run start
+npm ci && npm run build
+npm run db:push && npm run db:seed
+npm i -g pm2
+pm2 start ecosystem.config.js && pm2 save
 ```
 
-生产环境建议：将 `DATABASE_URL` 换成 MySQL/PostgreSQL，用 PM2 守护进程，Nginx 反向代理 + HTTPS。
+**方式二：Docker**
+
+```bash
+docker compose up -d --build
+```
+
+生产环境建议：Nginx 反向代理 + HTTPS；用户量大后将 `DATABASE_URL`
+换成 MySQL/PostgreSQL（SQLite 写并发有限）。当前限流器为单进程内存实现，
+多实例部署前需改造为 Redis。
+
+**自建网关/代理**：可用 `DEEPSEEK_BASE_URL` / `DASHSCOPE_BASE_URL`
+环境变量覆盖模型接口地址（OpenAI 兼容协议）。
+
+**无 Key 联调**：`node scripts/mock-llm.mjs 9099` 启动本地模拟模型，
+再以 `DEEPSEEK_BASE_URL=http://127.0.0.1:9099/v1 DEEPSEEK_API_KEY=mock npm run dev`
+启动应用，即可在不消耗真实 API 的情况下跑通全流程。

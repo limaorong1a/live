@@ -6,6 +6,7 @@ export type ChatMessage = { role: "system" | "user" | "assistant"; content: stri
 type Provider = {
   name: string;
   baseUrl: string;
+  baseUrlEnv: string; // 可用环境变量覆盖默认地址（自建网关/代理场景）
   apiKeyEnv: string;
   match: (model: string) => boolean;
 };
@@ -14,18 +15,24 @@ const PROVIDERS: Provider[] = [
   {
     name: "DeepSeek",
     baseUrl: "https://api.deepseek.com/v1",
+    baseUrlEnv: "DEEPSEEK_BASE_URL",
     apiKeyEnv: "DEEPSEEK_API_KEY",
     match: (m) => m.startsWith("deepseek"),
   },
   {
     name: "通义千问",
     baseUrl: "https://dashscope.aliyuncs.com/compatible-mode/v1",
+    baseUrlEnv: "DASHSCOPE_BASE_URL",
     apiKeyEnv: "DASHSCOPE_API_KEY",
     match: (m) => m.startsWith("qwen"),
   },
 ];
 
-function resolveProvider(model: string): { provider: Provider; apiKey: string } {
+function resolveProvider(model: string): {
+  provider: Provider;
+  baseUrl: string;
+  apiKey: string;
+} {
   const provider = PROVIDERS.find((p) => p.match(model));
   if (!provider) throw new Error(`不支持的模型: ${model}`);
   const apiKey = process.env[provider.apiKeyEnv];
@@ -34,7 +41,8 @@ function resolveProvider(model: string): { provider: Provider; apiKey: string } 
       `${provider.name} 的 API Key 未配置，请在 .env 中设置 ${provider.apiKeyEnv}`
     );
   }
-  return { provider, apiKey };
+  const baseUrl = process.env[provider.baseUrlEnv] || provider.baseUrl;
+  return { provider, baseUrl, apiKey };
 }
 
 /** 流式对话：逐段产出模型输出文本 */
@@ -42,9 +50,9 @@ export async function* chatStream(
   model: string,
   messages: ChatMessage[]
 ): AsyncGenerator<string> {
-  const { provider, apiKey } = resolveProvider(model);
+  const { baseUrl, apiKey } = resolveProvider(model);
 
-  const res = await fetch(`${provider.baseUrl}/chat/completions`, {
+  const res = await fetch(`${baseUrl}/chat/completions`, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${apiKey}`,

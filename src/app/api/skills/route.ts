@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db";
 import { getUser } from "@/lib/auth";
 import { rateLimit } from "@/lib/ratelimit";
 import { CATEGORIES, type InputField } from "@/lib/skills";
+import { checkSensitive } from "@/lib/moderation";
 
 export const runtime = "nodejs";
 
@@ -88,6 +89,13 @@ export async function POST(req: Request) {
   }
   if (usedKeys.length === 0)
     return bad("提示词模板中至少要使用一个 {{字段标识}} 占位符");
+
+  const sensitiveHit = checkSensitive(
+    [name, description, systemPrompt, promptTemplate].join("\n")
+  );
+  if (sensitiveHit) {
+    return bad("内容包含违规信息，请修改后重新提交");
+  }
 
   const slug = `u-${user.id.slice(-6)}-${Date.now().toString(36)}`;
   const skill = await prisma.skill.create({

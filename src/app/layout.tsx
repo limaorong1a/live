@@ -15,7 +15,15 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <Nav />
         <main className="mx-auto max-w-5xl px-4 py-8">{children}</main>
         <footer className="border-t border-slate-200 py-6 text-center text-xs text-slate-400">
-          技能中转站 SkillRelay · 内容由 AI 生成，仅供参考
+          <p>技能中转站 SkillRelay · 内容由 AI 生成，仅供参考</p>
+          <p className="mt-1 space-x-3">
+            <a href="/terms" className="hover:text-slate-600">
+              用户协议
+            </a>
+            <a href="/privacy" className="hover:text-slate-600">
+              隐私政策
+            </a>
+          </p>
         </footer>
       </body>
     </html>

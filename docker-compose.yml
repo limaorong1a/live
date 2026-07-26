@@ -1,0 +1,12 @@
+services:
+  web:
+    build: .
+    ports:
+      - "3000:3000"
+    env_file: .env
+    volumes:
+      # SQLite 数据文件持久化到宿主机
+      - ./data:/app/prisma/data
+    environment:
+      - DATABASE_URL=file:./data/prod.db
+    restart: unless-stopped

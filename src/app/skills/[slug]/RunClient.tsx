@@ -3,18 +3,22 @@
 import { useState } from "react";
 import Link from "next/link";
 import type { InputField } from "@/lib/skills";
+import Markdown from "@/components/Markdown";
 
 type Props = {
   slug: string;
   costCredits: number;
   fields: InputField[];
+  initialValues?: Record<string, string>;
 };
 
-export default function RunClient({ slug, costCredits, fields }: Props) {
+export default function RunClient({ slug, costCredits, fields, initialValues }: Props) {
   const [values, setValues] = useState<Record<string, string>>(() => {
     const init: Record<string, string> = {};
     for (const f of fields) {
-      init[f.key] = f.type === "select" && f.options?.length ? f.options[0] : "";
+      init[f.key] =
+        initialValues?.[f.key] ??
+        (f.type === "select" && f.options?.length ? f.options[0] : "");
     }
     return init;
   });
@@ -23,6 +27,7 @@ export default function RunClient({ slug, costCredits, fields }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [needLogin, setNeedLogin] = useState(false);
   const [needCredits, setNeedCredits] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   const set = (key: string, v: string) => setValues((s) => ({ ...s, [key]: v }));
 
@@ -31,6 +36,7 @@ export default function RunClient({ slug, costCredits, fields }: Props) {
     setNeedLogin(false);
     setNeedCredits(false);
     setOutput("");
+    setCopied(false);
     setRunning(true);
     try {
       const res = await fetch("/api/run", {
@@ -45,7 +51,7 @@ export default function RunClient({ slug, costCredits, fields }: Props) {
         if (res.status === 402) setNeedCredits(true);
         throw new Error(data.error || `请求失败 (${res.status})`);
       }
-      if (!res.body) throw new Error("浏览器不支持流式响应");
+      if (!res.body) throw new Error("当前浏览器不支持流式响应，请更换浏览器");
 
       const reader = res.body.getReader();
       const decoder = new TextDecoder();
@@ -83,7 +89,13 @@ export default function RunClient({ slug, costCredits, fields }: Props) {
   };
 
   const copy = async () => {
-    await navigator.clipboard.writeText(output);
+    try {
+      await navigator.clipboard.writeText(output);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      setError("复制失败，请手动选择文本复制");
+    }
   };
 
   return (
@@ -131,7 +143,7 @@ export default function RunClient({ slug, costCredits, fields }: Props) {
             （失败自动退回）
           </span>
           <button className="btn-primary" onClick={run} disabled={running}>
-            {running ? "生成中…" : "▶ 开始生成"}
+            {running ? "生成中…" : output ? "🔄 重新生成" : "▶ 开始生成"}
           </button>
         </div>
 
@@ -154,6 +166,11 @@ export default function RunClient({ slug, costCredits, fields }: Props) {
                 </Link>
               </>
             )}
+            {!needLogin && !needCredits && (
+              <button onClick={run} className="ml-2 font-medium underline">
+                重试
+              </button>
+            )}
           </div>
         )}
       </div>
@@ -164,14 +181,16 @@ export default function RunClient({ slug, costCredits, fields }: Props) {
             <h2 className="font-semibold text-slate-900">生成结果</h2>
             {output && !running && (
               <button className="btn-ghost !py-1 text-xs" onClick={copy}>
-                复制全文
+                {copied ? "✅ 已复制" : "📋 复制全文"}
               </button>
             )}
           </div>
-          <div className="whitespace-pre-wrap text-sm leading-relaxed text-slate-700">
-            {output || "正在连接模型…"}
-            {running && <span className="animate-pulse">▍</span>}
-          </div>
+          {output ? (
+            <Markdown content={output} />
+          ) : (
+            <p className="text-sm text-slate-400">正在连接模型…</p>
+          )}
+          {running && <span className="animate-pulse text-slate-400">▍</span>}
         </div>
       )}
     </div>

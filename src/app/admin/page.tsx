@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db";
 import { getUser } from "@/lib/auth";
 import ReviewButtons from "./ReviewButtons";
 import CodeGenerator from "./CodeGenerator";
+import UserManager from "./UserManager";
 
 export const dynamic = "force-dynamic";
 
@@ -90,6 +91,11 @@ ${s.inputs}`}
       <div className="card">
         <h2 className="mb-3 font-semibold text-slate-900">生成充值卡密</h2>
         <CodeGenerator />
+      </div>
+
+      <div className="card">
+        <h2 className="mb-3 font-semibold text-slate-900">用户管理</h2>
+        <UserManager />
       </div>
     </div>
   );

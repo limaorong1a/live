@@ -1,7 +1,10 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { getUser } from "@/lib/auth";
 import RedeemForm from "@/components/RedeemForm";
+import SkillManageButtons from "@/components/SkillManageButtons";
+import Markdown from "@/components/Markdown";
 
 export const dynamic = "force-dynamic";
 
@@ -18,7 +21,7 @@ export default async function AccountPage() {
   const [runs, mySkills] = await Promise.all([
     prisma.run.findMany({
       where: { userId: user.id },
-      include: { skill: { select: { name: true, emoji: true } } },
+      include: { skill: { select: { name: true, emoji: true, slug: true } } },
       orderBy: { createdAt: "desc" },
       take: 20,
     }),
@@ -59,20 +62,31 @@ export default async function AccountPage() {
                     {s.costCredits} 积分/次 · 已使用 {s.runsCount} 次
                   </span>
                 </span>
-                <span
-                  className={
-                    s.reviewStatus === "approved"
-                      ? "text-green-600"
+                <span className="flex items-center gap-3">
+                  <span
+                    className={
+                      s.reviewStatus === "approved"
+                        ? s.published
+                          ? "text-green-600"
+                          : "text-slate-400"
+                        : s.reviewStatus === "pending"
+                          ? "text-amber-600"
+                          : "text-red-500"
+                    }
+                  >
+                    {s.reviewStatus === "approved"
+                      ? s.published
+                        ? "✅ 已上架"
+                        : "⏸ 已下架"
                       : s.reviewStatus === "pending"
-                        ? "text-amber-600"
-                        : "text-red-500"
-                  }
-                >
-                  {s.reviewStatus === "approved"
-                    ? "✅ 已上架"
-                    : s.reviewStatus === "pending"
-                      ? "⏳ 审核中"
-                      : "❌ 未通过"}
+                        ? "⏳ 审核中"
+                        : "❌ 未通过"}
+                  </span>
+                  <SkillManageButtons
+                    skillId={s.id}
+                    published={s.published}
+                    reviewStatus={s.reviewStatus}
+                  />
                 </span>
               </li>
             ))}
@@ -83,7 +97,12 @@ export default async function AccountPage() {
       <div className="card">
         <h2 className="mb-3 font-semibold text-slate-900">使用记录</h2>
         {runs.length === 0 ? (
-          <p className="text-sm text-slate-400">还没有使用记录，去首页试试吧</p>
+          <p className="text-sm text-slate-400">
+            还没有使用记录，
+            <Link href="/" className="text-brand-600 underline">
+              去首页挑一个技能试试
+            </Link>
+          </p>
         ) : (
           <ul className="divide-y divide-slate-100">
             {runs.map((r) => (
@@ -92,9 +111,17 @@ export default async function AccountPage() {
                   <span className="font-medium text-slate-800">
                     {r.skill.emoji} {r.skill.name}
                   </span>
-                  <span className="text-slate-400">
-                    {statusLabel[r.status] ?? r.status} · {r.creditsSpent} 积分 ·{" "}
-                    {r.createdAt.toLocaleString("zh-CN", { hour12: false })}
+                  <span className="flex items-center gap-3 text-slate-400">
+                    <span>
+                      {statusLabel[r.status] ?? r.status} · {r.creditsSpent} 积分 ·{" "}
+                      {r.createdAt.toLocaleString("zh-CN", { hour12: false })}
+                    </span>
+                    <Link
+                      href={`/skills/${r.skill.slug}?prefill=${r.id}`}
+                      className="text-brand-600 hover:underline"
+                    >
+                      再次使用
+                    </Link>
                   </span>
                 </div>
                 {r.output && (
@@ -102,8 +129,8 @@ export default async function AccountPage() {
                     <summary className="cursor-pointer text-xs text-brand-600">
                       查看结果
                     </summary>
-                    <div className="mt-2 whitespace-pre-wrap rounded-lg bg-slate-50 p-3 text-xs leading-relaxed text-slate-600">
-                      {r.output}
+                    <div className="mt-2 rounded-lg bg-slate-50 p-3">
+                      <Markdown content={r.output} />
                     </div>
                   </details>
                 )}

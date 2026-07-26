@@ -1,16 +1,34 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
+import { getUserId } from "@/lib/auth";
 import type { InputField } from "@/lib/skills";
 import RunClient from "./RunClient";
 
 export const dynamic = "force-dynamic";
+
+type PageProps = {
+  params: { slug: string };
+  searchParams: { prefill?: string };
+};
+
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  const skill = await prisma.skill.findUnique({ where: { slug: params.slug } });
+  if (!skill || !skill.published || skill.reviewStatus !== "approved") {
+    return { title: "技能不存在 — 技能中转站" };
+  }
+  return {
+    title: `${skill.name} — 技能中转站`,
+    description: skill.description,
+  };
+}
 
 function maskEmail(email: string) {
   const [name, domain] = email.split("@");
   return `${name.slice(0, 2)}***@${domain}`;
 }
 
-export default async function SkillPage({ params }: { params: { slug: string } }) {
+export default async function SkillPage({ params, searchParams }: PageProps) {
   const skill = await prisma.skill.findUnique({
     where: { slug: params.slug },
     include: { creator: { select: { email: true } } },
@@ -18,6 +36,24 @@ export default async function SkillPage({ params }: { params: { slug: string } }
   if (!skill || !skill.published || skill.reviewStatus !== "approved") notFound();
 
   const fields: InputField[] = JSON.parse(skill.inputs);
+
+  // 「再次使用」：从自己的历史运行记录预填输入
+  let initialValues: Record<string, string> | undefined;
+  if (searchParams.prefill) {
+    const userId = await getUserId();
+    if (userId) {
+      const run = await prisma.run.findUnique({
+        where: { id: searchParams.prefill },
+      });
+      if (run && run.userId === userId && run.skillId === skill.id) {
+        try {
+          initialValues = JSON.parse(run.inputs);
+        } catch {
+          // 忽略损坏的历史输入
+        }
+      }
+    }
+  }
 
   return (
     <div className="mx-auto max-w-3xl">
@@ -40,6 +76,7 @@ export default async function SkillPage({ params }: { params: { slug: string } }
         slug={skill.slug}
         costCredits={skill.costCredits}
         fields={fields}
+        initialValues={initialValues}
       />
     </div>
   );
