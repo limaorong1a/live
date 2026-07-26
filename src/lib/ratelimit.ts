@@ -21,7 +21,19 @@ export function rateLimit(key: string, limit: number, windowMs: number): boolean
   return true;
 }
 
+// 只有当应用确实部署在自己可信的反向代理（如自建 Nginx）之后时，
+// 才信任 X-Forwarded-For。设置环境变量 TRUSTED_PROXY=true 开启。
+// 否则 XFF 完全由客户端伪造，用它做限流键等于没有限流。
+const TRUST_PROXY = process.env.TRUSTED_PROXY === "true";
+
 export function clientIp(req: Request): string {
-  const fwd = req.headers.get("x-forwarded-for");
-  return fwd?.split(",")[0]?.trim() || "unknown";
+  if (TRUST_PROXY) {
+    const fwd = req.headers.get("x-forwarded-for");
+    // 可信代理会把真实客户端 IP 追加为最右一跳
+    const parts = fwd?.split(",").map((s) => s.trim()).filter(Boolean);
+    if (parts && parts.length > 0) return parts[parts.length - 1];
+    const real = req.headers.get("x-real-ip");
+    if (real) return real.trim();
+  }
+  return "unknown";
 }

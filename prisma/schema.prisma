@@ -13,6 +13,7 @@ model User {
   passwordHash  String
   credits       Int          @default(20)
   isAdmin       Boolean      @default(false)
+  agreedAt      DateTime? // 同意用户协议/隐私政策的时间，合规留痕
   createdAt     DateTime     @default(now())
   runs          Run[]
   redeemCodes   RedeemCode[]
@@ -59,6 +60,21 @@ model Run {
   inputs       String // JSON: 用户提交的输入
   output       String   @default("")
   creditsSpent Int
-  status       String   @default("running") // running | done | error
+  status       String   @default("running") // running | done | error | blocked
+  ip           String?
   createdAt    DateTime @default(now())
+
+  @@index([userId, createdAt])
+}
+
+// 合规审计日志：登录/注册/兑换/管理操作留痕，含 IP，便于溯源与投诉处理
+model AuditLog {
+  id        String   @id @default(cuid())
+  type      String // login | login_fail | register | redeem | admin_adjust
+  userId    String?
+  ip        String?
+  detail    String   @default("")
+  createdAt DateTime @default(now())
+
+  @@index([type, createdAt])
 }

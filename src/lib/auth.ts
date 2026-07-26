@@ -3,9 +3,18 @@ import { cookies } from "next/headers";
 import bcrypt from "bcryptjs";
 import { prisma } from "./db";
 
-const secret = new TextEncoder().encode(
-  process.env.JWT_SECRET || "dev-secret-change-me"
-);
+const DEV_FALLBACK = "dev-secret-change-me";
+const rawSecret = process.env.JWT_SECRET || DEV_FALLBACK;
+// 生产环境绝不允许使用默认/占位密钥启动，否则任何人都能伪造管理员会话
+if (
+  process.env.NODE_ENV === "production" &&
+  (!process.env.JWT_SECRET || process.env.JWT_SECRET === DEV_FALLBACK)
+) {
+  throw new Error(
+    "JWT_SECRET 未配置或仍为默认值，拒绝以不安全的密钥启动。请在 .env 中设置一个高强度随机字符串。"
+  );
+}
+const secret = new TextEncoder().encode(rawSecret);
 const COOKIE_NAME = "sr_token";
 
 export function hashPassword(password: string) {

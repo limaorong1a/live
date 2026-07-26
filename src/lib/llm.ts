@@ -3,6 +3,14 @@
 
 export type ChatMessage = { role: "system" | "user" | "assistant"; content: string };
 
+// 面向用户的通用错误（不泄露上游细节）。route 层据此决定给用户展示什么。
+export class UpstreamError extends Error {
+  constructor(public detail: string) {
+    super(detail);
+    this.name = "UpstreamError";
+  }
+}
+
 type Provider = {
   name: string;
   baseUrl: string;
@@ -45,10 +53,11 @@ function resolveProvider(model: string): {
   return { provider, baseUrl, apiKey };
 }
 
-/** 流式对话：逐段产出模型输出文本 */
+/** 流式对话：逐段产出模型输出文本。signal 用于在客户端断开时取消上游连接，停止计费。 */
 export async function* chatStream(
   model: string,
-  messages: ChatMessage[]
+  messages: ChatMessage[],
+  signal?: AbortSignal
 ): AsyncGenerator<string> {
   const { baseUrl, apiKey } = resolveProvider(model);
 
@@ -59,35 +68,42 @@ export async function* chatStream(
       "Content-Type": "application/json",
     },
     body: JSON.stringify({ model, messages, stream: true }),
+    signal,
   });
 
   if (!res.ok || !res.body) {
     const detail = await res.text().catch(() => "");
-    throw new Error(`上游模型请求失败 (${res.status}): ${detail.slice(0, 300)}`);
+    // 细节仅供服务端日志，不作为面向用户的文案
+    throw new UpstreamError(`上游模型请求失败 (${res.status}): ${detail.slice(0, 300)}`);
   }
 
   const reader = res.body.getReader();
   const decoder = new TextDecoder();
   let buffer = "";
 
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    buffer += decoder.decode(value, { stream: true });
-    const lines = buffer.split("\n");
-    buffer = lines.pop() ?? "";
-    for (const line of lines) {
-      const trimmed = line.trim();
-      if (!trimmed.startsWith("data:")) continue;
-      const payload = trimmed.slice(5).trim();
-      if (payload === "[DONE]") return;
-      try {
-        const json = JSON.parse(payload);
-        const delta: string | undefined = json.choices?.[0]?.delta?.content;
-        if (delta) yield delta;
-      } catch {
-        // 忽略无法解析的心跳/注释行
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split("\n");
+      buffer = lines.pop() ?? "";
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (!trimmed.startsWith("data:")) continue;
+        const payload = trimmed.slice(5).trim();
+        if (payload === "[DONE]") return;
+        try {
+          const json = JSON.parse(payload);
+          const delta: string | undefined = json.choices?.[0]?.delta?.content;
+          if (delta) yield delta;
+        } catch {
+          // 忽略无法解析的心跳/注释行
+        }
       }
     }
+  } finally {
+    // 无论正常结束、异常还是被 return（客户端断开）都释放上游连接
+    await reader.cancel().catch(() => {});
   }
 }

@@ -12,7 +12,12 @@ const statusLabel: Record<string, string> = {
   done: "✅ 完成",
   running: "⏳ 进行中",
   error: "❌ 失败(已退款)",
+  blocked: "🚫 违规拦截(已退款)",
 };
+
+// 客服联系方式：部署时用环境变量 NEXT_PUBLIC_SUPPORT_CONTACT 覆盖
+const supportContact =
+  process.env.NEXT_PUBLIC_SUPPORT_CONTACT || "客服微信：skillrelay";
 
 export default async function AccountPage() {
   const user = await getUser();
@@ -43,10 +48,26 @@ export default async function AccountPage() {
       </div>
 
       <div className="card">
-        <h2 className="mb-3 font-semibold text-slate-900">卡密充值</h2>
+        <h2 className="mb-3 font-semibold text-slate-900">充值积分</h2>
+        <div className="mb-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
+          {[
+            { credits: 100, price: "¥9.9" },
+            { credits: 300, price: "¥25" },
+            { credits: 600, price: "¥45" },
+            { credits: 1500, price: "¥99" },
+          ].map((p) => (
+            <div key={p.credits} className="rounded-lg border border-slate-200 p-3 text-center">
+              <p className="text-lg font-bold text-amber-600">{p.credits}</p>
+              <p className="text-xs text-slate-400">积分</p>
+              <p className="mt-1 text-sm font-medium text-slate-700">{p.price}</p>
+            </div>
+          ))}
+        </div>
         <RedeemForm />
-        <p className="mt-3 text-xs text-slate-400">
-          在线支付（微信 / 支付宝）正在接入中，当前请联系管理员购买充值卡密。
+        <p className="mt-3 text-xs text-slate-500">
+          在线支付接入中。当前请通过
+          <b className="text-slate-700"> {supportContact} </b>
+          联系客服购买卡密，兑换即时到账。
         </p>
       </div>
 
