@@ -75,6 +75,22 @@ model Run {
   @@index([userId, createdAt])
 }
 
+// 充值订单：支持可插拔支付网关（人工确认 / 微信 / 支付宝）
+model Order {
+  id         String    @id @default(cuid())
+  userId     String
+  credits    Int // 购买的积分数
+  amountFen  Int // 金额（单位：分）
+  status     String    @default("pending") // pending | paid | canceled
+  provider   String    @default("manual") // manual | wechat | alipay
+  outTradeNo String    @unique // 商户订单号
+  paidAt     DateTime?
+  createdAt  DateTime  @default(now())
+
+  @@index([userId, createdAt])
+  @@index([status, createdAt])
+}
+
 // 合规审计日志：登录/注册/兑换/管理操作留痕，含 IP，便于溯源与投诉处理
 model AuditLog {
   id        String   @id @default(cuid())
