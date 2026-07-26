@@ -8,6 +8,7 @@ import Markdown from "@/components/Markdown";
 import CheckInCard from "@/components/CheckInCard";
 import InviteCard from "@/components/InviteCard";
 import RechargeCard from "@/components/RechargeCard";
+import EarningsCard from "@/components/EarningsCard";
 
 export const dynamic = "force-dynamic";
 
@@ -75,6 +76,8 @@ export default async function AccountPage() {
       </div>
 
       <CheckInCard />
+
+      <EarningsCard />
 
       <InviteCard />
 

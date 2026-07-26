@@ -6,6 +6,7 @@ import { renderTemplate, type InputField } from "@/lib/skills";
 import { renderStepInputs, type WorkflowStep } from "@/lib/workflow";
 import { rateLimit } from "@/lib/ratelimit";
 import { moderateInputs, checkSensitive } from "@/lib/moderation";
+import { accrueCreatorEarning } from "@/lib/earnings";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -185,6 +186,14 @@ export async function POST(req: Request) {
             .catch(() => {});
           push({ error: "生成内容包含违规信息，已终止（积分已退回）", refunded: true });
           return;
+        }
+
+        // 创作者分成：为工作流中每个创作者技能的作者记一笔收益
+        for (let i = 0; i < steps.length && i < stepOutputs.length; i++) {
+          const sk = skills[i];
+          if (sk?.creatorId) {
+            await accrueCreatorEarning(sk.creatorId, sk.id, sk.costCredits);
+          }
         }
 
         const combinedOutput = combined.join("\n\n---\n\n");

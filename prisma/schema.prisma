@@ -21,10 +21,35 @@ model User {
   invitedById   String? // 邀请我的人的 userId
   firstRunRewarded Boolean   @default(false) // 是否已因首次运行发放邀请奖励
   invitedCount  Int          @default(0) // 我成功邀请并激活的人数
+  earningsFen   Int          @default(0) // 作为创作者累计可提现收益（分）
   createdAt     DateTime     @default(now())
   runs          Run[]
   redeemCodes   RedeemCode[]
   createdSkills Skill[]      @relation("createdSkills")
+}
+
+// 创作者分成流水：用户每运行一次创作者技能，给创作者记一笔收益
+model CreatorEarning {
+  id        String   @id @default(cuid())
+  creatorId String
+  skillId   String
+  amountFen Int
+  createdAt DateTime @default(now())
+
+  @@index([creatorId, createdAt])
+}
+
+// 创作者提现申请
+model Payout {
+  id        String    @id @default(cuid())
+  userId    String
+  amountFen Int
+  account   String // 收款账号（微信/支付宝，创作者填写）
+  status    String    @default("pending") // pending | paid | rejected
+  createdAt DateTime  @default(now())
+  paidAt    DateTime?
+
+  @@index([status, createdAt])
 }
 
 model RedeemCode {

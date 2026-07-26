@@ -5,6 +5,7 @@ import ReviewButtons from "./ReviewButtons";
 import CodeGenerator from "./CodeGenerator";
 import UserManager from "./UserManager";
 import OrderManager from "./OrderManager";
+import PayoutManager from "./PayoutManager";
 
 export const dynamic = "force-dynamic";
 
@@ -97,6 +98,11 @@ ${s.inputs}`}
       <div className="card">
         <h2 className="mb-3 font-semibold text-slate-900">充值订单</h2>
         <OrderManager />
+      </div>
+
+      <div className="card">
+        <h2 className="mb-3 font-semibold text-slate-900">创作者提现</h2>
+        <PayoutManager />
       </div>
 
       <div className="card">

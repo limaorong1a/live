@@ -6,6 +6,7 @@ import { renderTemplate, type InputField } from "@/lib/skills";
 import { rateLimit, clientIp } from "@/lib/ratelimit";
 import { moderateInputs, checkSensitive } from "@/lib/moderation";
 import { maybeRewardInvite } from "@/lib/invite";
+import { accrueCreatorEarning } from "@/lib/earnings";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -188,6 +189,8 @@ export async function POST(req: Request) {
               data: { runsCount: { increment: 1 } },
             }),
           ]);
+          // 创作者分成（官方技能 creatorId 为空则跳过）
+          await accrueCreatorEarning(skill.creatorId, skill.id, skill.costCredits);
           // 被邀请人首次成功生成：给双方发邀请奖励（幂等）
           const inviteReward = await maybeRewardInvite(user.id).catch(() => 0);
           const updatedUser = await prisma.user.findUniqueOrThrow({ where: { id: user.id } });
