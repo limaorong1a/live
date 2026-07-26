@@ -1,10 +1,17 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { hashPassword, createSession } from "@/lib/auth";
+import { rateLimit, clientIp } from "@/lib/ratelimit";
 
 export const runtime = "nodejs";
 
 export async function POST(req: Request) {
+  if (!rateLimit(`register:${clientIp(req)}`, 5, 60 * 60 * 1000)) {
+    return NextResponse.json(
+      { error: "注册太频繁，请稍后再试" },
+      { status: 429 }
+    );
+  }
   const { email, password } = await req.json().catch(() => ({}));
   if (typeof email !== "string" || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     return NextResponse.json({ error: "邮箱格式不正确" }, { status: 400 });

@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db";
 import { getUser } from "@/lib/auth";
 import { chatStream, type ChatMessage } from "@/lib/llm";
 import { renderTemplate, type InputField } from "@/lib/skills";
+import { rateLimit } from "@/lib/ratelimit";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -14,6 +15,12 @@ function sse(data: object) {
 export async function POST(req: Request) {
   const user = await getUser();
   if (!user) return NextResponse.json({ error: "请先登录" }, { status: 401 });
+  if (!rateLimit(`run:${user.id}`, 10, 60 * 1000)) {
+    return NextResponse.json(
+      { error: "操作太频繁，请一分钟后再试" },
+      { status: 429 }
+    );
+  }
 
   const body = await req.json().catch(() => ({}));
   const slug: unknown = body.slug;
@@ -25,8 +32,8 @@ export async function POST(req: Request) {
   }
 
   const skill = await prisma.skill.findUnique({ where: { slug } });
-  if (!skill || !skill.published) {
-    return NextResponse.json({ error: "技能不存在" }, { status: 404 });
+  if (!skill || !skill.published || skill.reviewStatus !== "approved") {
+    return NextResponse.json({ error: "技能不存在或未上架" }, { status: 404 });
   }
 
   const fields: InputField[] = JSON.parse(skill.inputs);

@@ -1,5 +1,13 @@
 // 技能输入字段的类型定义，Skill.inputs 字段存储的是 InputField[] 的 JSON。
 
+export const CATEGORIES = [
+  "求职就业",
+  "新媒体运营",
+  "商务办公",
+  "学习教育",
+  "生活实用",
+] as const;
+
 export type InputField = {
   key: string;
   label: string;

@@ -15,12 +15,18 @@ export default async function AccountPage() {
   const user = await getUser();
   if (!user) redirect("/login");
 
-  const runs = await prisma.run.findMany({
-    where: { userId: user.id },
-    include: { skill: { select: { name: true, emoji: true } } },
-    orderBy: { createdAt: "desc" },
-    take: 20,
-  });
+  const [runs, mySkills] = await Promise.all([
+    prisma.run.findMany({
+      where: { userId: user.id },
+      include: { skill: { select: { name: true, emoji: true } } },
+      orderBy: { createdAt: "desc" },
+      take: 20,
+    }),
+    prisma.skill.findMany({
+      where: { creatorId: user.id },
+      orderBy: { createdAt: "desc" },
+    }),
+  ]);
 
   return (
     <div className="mx-auto grid max-w-3xl gap-6">
@@ -40,6 +46,39 @@ export default async function AccountPage() {
           在线支付（微信 / 支付宝）正在接入中，当前请联系管理员购买充值卡密。
         </p>
       </div>
+
+      {mySkills.length > 0 && (
+        <div className="card">
+          <h2 className="mb-3 font-semibold text-slate-900">我创作的技能</h2>
+          <ul className="divide-y divide-slate-100">
+            {mySkills.map((s) => (
+              <li key={s.id} className="flex items-center justify-between py-3 text-sm">
+                <span className="font-medium text-slate-800">
+                  {s.emoji} {s.name}
+                  <span className="ml-2 text-xs text-slate-400">
+                    {s.costCredits} 积分/次 · 已使用 {s.runsCount} 次
+                  </span>
+                </span>
+                <span
+                  className={
+                    s.reviewStatus === "approved"
+                      ? "text-green-600"
+                      : s.reviewStatus === "pending"
+                        ? "text-amber-600"
+                        : "text-red-500"
+                  }
+                >
+                  {s.reviewStatus === "approved"
+                    ? "✅ 已上架"
+                    : s.reviewStatus === "pending"
+                      ? "⏳ 审核中"
+                      : "❌ 未通过"}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       <div className="card">
         <h2 className="mb-3 font-semibold text-slate-900">使用记录</h2>

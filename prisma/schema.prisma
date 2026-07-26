@@ -8,14 +8,15 @@ datasource db {
 }
 
 model User {
-  id           String       @id @default(cuid())
-  email        String       @unique
-  passwordHash String
-  credits      Int          @default(20)
-  isAdmin      Boolean      @default(false)
-  createdAt    DateTime     @default(now())
-  runs         Run[]
-  redeemCodes  RedeemCode[]
+  id            String       @id @default(cuid())
+  email         String       @unique
+  passwordHash  String
+  credits       Int          @default(20)
+  isAdmin       Boolean      @default(false)
+  createdAt     DateTime     @default(now())
+  runs          Run[]
+  redeemCodes   RedeemCode[]
+  createdSkills Skill[]      @relation("createdSkills")
 }
 
 model RedeemCode {
@@ -41,6 +42,9 @@ model Skill {
   costCredits    Int      @default(1)
   model          String   @default("deepseek-chat")
   published      Boolean  @default(true)
+  reviewStatus   String   @default("approved") // pending | approved | rejected
+  creator        User?    @relation("createdSkills", fields: [creatorId], references: [id])
+  creatorId      String?
   runsCount      Int      @default(0)
   createdAt      DateTime @default(now())
   runs           Run[]
