@@ -9,6 +9,9 @@ dist/
 
 prisma/*.db
 prisma/*.db-journal
+prisma/*.db-shm
+prisma/*.db-wal
+prisma/data/
 
 npm-debug.log*
 *.tsbuildinfo
