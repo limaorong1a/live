@@ -3,3 +3,5 @@ Allow: /
 Disallow: /admin
 Disallow: /account
 Disallow: /api/
+
+Sitemap: /sitemap.xml

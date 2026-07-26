@@ -21,9 +21,33 @@ const statusLabel: Record<string, string> = {
 const supportContact =
   process.env.NEXT_PUBLIC_SUPPORT_CONTACT || "客服微信：skillrelay";
 
+// 兜底清理：进程崩溃等极端情况下可能残留"进行中"的记录，
+// 超过 10 分钟仍未完成的判为失败并退回积分。
+async function reconcileStuckRuns(userId: string) {
+  const cutoff = new Date(Date.now() - 10 * 60 * 1000);
+  const stuck = await prisma.run.findMany({
+    where: { userId, status: "running", createdAt: { lt: cutoff } },
+  });
+  for (const r of stuck) {
+    await prisma
+      .$transaction([
+        prisma.run.update({ where: { id: r.id }, data: { status: "error", creditsSpent: 0 } }),
+        prisma.user.update({
+          where: { id: userId },
+          data: { credits: { increment: r.creditsSpent } },
+        }),
+      ])
+      .catch(() => {});
+  }
+}
+
 export default async function AccountPage() {
-  const user = await getUser();
-  if (!user) redirect("/login");
+  const current = await getUser();
+  if (!current) redirect("/login");
+
+  await reconcileStuckRuns(current.id).catch(() => {});
+  // 兜底退款后重新读取余额，保证展示为最新值
+  const user = (await getUser()) ?? current;
 
   const [runs, mySkills] = await Promise.all([
     prisma.run.findMany({

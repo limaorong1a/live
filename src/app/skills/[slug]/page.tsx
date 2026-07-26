@@ -55,8 +55,20 @@ export default async function SkillPage({ params, searchParams }: PageProps) {
     }
   }
 
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "HowTo",
+    name: skill.name,
+    description: skill.description,
+    totalTime: "PT1M",
+  };
+
   return (
     <div className="mx-auto max-w-3xl">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       <div className="mb-6">
         <div className="flex items-center gap-3">
           <span className="text-4xl">{skill.emoji}</span>

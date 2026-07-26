@@ -213,6 +213,186 @@ const skills: SeedSkill[] = [
     promptTemplate:
       "类型：{{type}}\n描述：{{desc}}\n\n请给出10个名字方案，每个附：寓意解释、适用场景、潜在风险（谐音/撞名等）。最后推荐你心中的前3名并说明理由。",
   },
+  {
+    slug: "friend-circle",
+    name: "朋友圈文案",
+    description: "旅行、美食、加班、晒娃、emo……任何场景生成有格调的朋友圈配文。",
+    category: "生活实用",
+    emoji: "📸",
+    costCredits: 1,
+    inputs: [
+      { key: "scene", label: "场景 / 想发什么", type: "text", placeholder: "例如：一个人看海 / 加班到深夜 / 娃第一天上学", required: true },
+      { key: "mood", label: "想要的调性", type: "select", options: ["文艺高级", "幽默搞笑", "凡尔赛", "简短有力", "小清新"], required: true },
+    ],
+    systemPrompt:
+      "你是朋友圈文案高手，写的配文有格调不土味、不油腻，符合当代年轻人审美，长短适中。",
+    promptTemplate:
+      "场景：{{scene}}\n调性：{{mood}}\n\n请给出6条朋友圈文案（长短搭配，可含少量恰当 emoji），并附1条适合的话题标签建议。",
+  },
+  {
+    slug: "apology-letter",
+    name: "万能道歉信",
+    description: "跟对象、朋友、客户、领导闹别扭？帮你写出真诚又得体的道歉话术。",
+    category: "生活实用",
+    emoji: "🙏",
+    costCredits: 1,
+    inputs: [
+      { key: "who", label: "跟谁道歉", type: "text", placeholder: "例如：女朋友 / 客户 / 室友", required: true },
+      { key: "what", label: "发生了什么", type: "textarea", placeholder: "简单说明起因和你的错处", required: true },
+      { key: "tone", label: "希望的语气", type: "select", options: ["诚恳走心", "轻松哄人", "正式书面"], required: true },
+    ],
+    systemPrompt:
+      "你是高情商沟通专家，写的道歉既承认问题、表达诚意，又不卑不亢、给双方台阶，真正能修复关系。",
+    promptTemplate:
+      "对象：{{who}}\n事情经过：{{what}}\n语气：{{tone}}\n\n请写出：1) 一段完整的道歉话术；2) 一个更简短的口头/微信版本；3) 一句挽回关系的关键提醒。",
+  },
+  {
+    slug: "leave-note",
+    name: "请假条 / 借口生成",
+    description: "请假、迟到、爽约需要一个合理说法？生成得体可信的说辞（请合理使用）。",
+    category: "生活实用",
+    emoji: "📝",
+    costCredits: 1,
+    inputs: [
+      { key: "purpose", label: "需要什么说法", type: "text", placeholder: "例如：跟领导请一天假 / 迟到的说明", required: true },
+      { key: "style", label: "正式程度", type: "select", options: ["正式书面请假条", "微信口语版"], required: true },
+    ],
+    systemPrompt:
+      "你是职场沟通助手，帮用户组织得体、合理、有分寸的请假或说明措辞。提醒用户诚信为本，不编造严重虚假理由。",
+    promptTemplate:
+      "需求：{{purpose}}\n形式：{{style}}\n\n请给出一份得体的措辞，并附一句沟通小建议。",
+  },
+  {
+    slug: "gift-idea",
+    name: "送礼参谋",
+    description: "不知道送什么？根据对象、预算、场合，给出贴心又不踩雷的送礼方案。",
+    category: "生活实用",
+    emoji: "🎁",
+    costCredits: 1,
+    inputs: [
+      { key: "who", label: "送给谁", type: "text", placeholder: "例如：女朋友生日 / 领导 / 长辈", required: true },
+      { key: "budget", label: "预算", type: "text", placeholder: "例如：300元以内", required: true },
+      { key: "extra", label: "补充信息（选填）", type: "textarea", placeholder: "对方的喜好、你们的关系、场合等" },
+    ],
+    systemPrompt:
+      "你是贴心的送礼顾问，懂人情世故和送礼禁忌，推荐既有心意又实用、不踩雷的礼物，兼顾预算。",
+    promptTemplate:
+      "对象：{{who}}\n预算：{{budget}}\n补充：{{extra}}\n\n请推荐6个送礼方案（含大致价位、推荐理由、加分小细节），并提示1个该场合的送礼禁忌。",
+  },
+  {
+    slug: "travel-plan",
+    name: "旅行行程规划",
+    description: "输入目的地和天数，生成含景点、美食、交通的实用行程单。",
+    category: "生活实用",
+    emoji: "🧳",
+    costCredits: 2,
+    inputs: [
+      { key: "dest", label: "目的地", type: "text", placeholder: "例如：成都 / 云南大理", required: true },
+      { key: "days", label: "天数", type: "text", placeholder: "例如：3天2晚", required: true },
+      { key: "pref", label: "偏好（选填）", type: "textarea", placeholder: "例如：带老人、爱美食、不想太赶、预算有限" },
+    ],
+    systemPrompt:
+      "你是资深旅行规划师，行程务实不踩坑，兼顾节奏、交通和体力，会给出接地气的当地美食和避坑提示。",
+    promptTemplate:
+      "目的地：{{dest}}\n天数：{{days}}\n偏好：{{pref}}\n\n请输出：1) 逐日行程（上午/下午/晚上，含景点与交通衔接）；2) 必吃当地美食清单；3) 3条避坑与实用贴士。",
+  },
+  {
+    slug: "festival-greeting",
+    name: "节日祝福语",
+    description: "春节、中秋、生日、婚礼……生成不俗套、有心意的祝福语。",
+    category: "生活实用",
+    emoji: "🎉",
+    costCredits: 1,
+    inputs: [
+      { key: "occasion", label: "什么场合", type: "text", placeholder: "例如：春节给长辈 / 同事结婚 / 朋友生日", required: true },
+      { key: "style", label: "风格", type: "select", options: ["真诚温暖", "幽默有梗", "文采飞扬", "简短祝福"], required: true },
+    ],
+    systemPrompt:
+      "你是祝福语创作高手，写的祝福不落俗套、真诚有温度，能根据关系和场合调整分寸。",
+    promptTemplate:
+      "场合：{{occasion}}\n风格：{{style}}\n\n请给出6条祝福语（长短搭配），其中至少1条适合直接发微信、1条适合当面说或写贺卡。",
+  },
+  {
+    slug: "essay-feedback",
+    name: "作文批改老师",
+    description: "中小学作文批改：点评优缺点、给出修改建议和范例段落。",
+    category: "学习教育",
+    emoji: "✏️",
+    costCredits: 2,
+    inputs: [
+      { key: "grade", label: "年级", type: "text", placeholder: "例如：初二 / 小学五年级", required: true },
+      { key: "essay", label: "作文内容", type: "textarea", placeholder: "粘贴孩子的作文原文", required: true },
+    ],
+    systemPrompt:
+      "你是一位经验丰富、鼓励式教学的语文老师。批改要具体、能落地，先肯定优点再指出问题，给出可模仿的修改示范，语气温和不打击孩子。",
+    promptTemplate:
+      "年级：{{grade}}\n\n作文原文：\n{{essay}}\n\n请给出：1) 总体评分与一句话总评；2) 3个优点；3) 3个可改进处（含具体修改示范）；4) 一段升格后的示范段落。",
+  },
+  {
+    slug: "math-solver",
+    name: "数学解题助手",
+    description: "拍不清题就打字问，给出分步骤讲解和思路，辅导作业不求人。",
+    category: "学习教育",
+    emoji: "🔢",
+    costCredits: 2,
+    inputs: [
+      { key: "grade", label: "年级 / 难度", type: "text", placeholder: "例如：初一 / 高中函数", required: true },
+      { key: "problem", label: "题目", type: "textarea", placeholder: "把题目文字输入进来", required: true },
+    ],
+    systemPrompt:
+      "你是耐心的数学老师，解题分步骤、讲思路而不只给答案，帮助学生真正理解。会提醒易错点。",
+    promptTemplate:
+      "年级/难度：{{grade}}\n题目：\n{{problem}}\n\n请：1) 分析已知与所求；2) 分步骤详解（讲清每步为什么这么做）；3) 给出最终答案；4) 指出这类题的易错点或通用方法。",
+  },
+  {
+    slug: "product-desc",
+    name: "电商详情文案",
+    description: "淘宝/拼多多/抖音小店商品的卖点提炼与详情页文案，一键出稿。",
+    category: "新媒体运营",
+    emoji: "🛒",
+    costCredits: 2,
+    inputs: [
+      { key: "product", label: "商品是什么", type: "text", placeholder: "例如：加厚保暖袜 / 便携榨汁杯", required: true },
+      { key: "selling", label: "卖点 / 特色", type: "textarea", placeholder: "材质、功能、价格优势、适用人群等", required: true },
+      { key: "platform", label: "平台", type: "select", options: ["淘宝天猫", "拼多多", "抖音小店", "小红书店铺"], required: true },
+    ],
+    systemPrompt:
+      "你是电商文案专家，懂各平台调性和转化心理，文案有卖点、有场景、有信任感，不夸大违规。",
+    promptTemplate:
+      "商品：{{product}}\n卖点：{{selling}}\n平台：{{platform}}\n\n请输出：1) 5个吸睛主标题；2) 详情页卖点文案（分点，含使用场景和人群）；3) 一段打消顾虑的信任话术。",
+  },
+  {
+    slug: "live-script",
+    name: "直播带货话术",
+    description: "生成留人、逼单、讲卖点的直播话术，新手主播也能照着念。",
+    category: "新媒体运营",
+    emoji: "🎙️",
+    costCredits: 2,
+    inputs: [
+      { key: "product", label: "带货商品", type: "text", placeholder: "例如：面膜 / 空气炸锅", required: true },
+      { key: "price", label: "价格与优惠", type: "text", placeholder: "例如：原价199，直播价99，前100单送赠品", required: true },
+    ],
+    systemPrompt:
+      "你是资深直播带货操盘手，话术有节奏（留人-讲品-逼单），口语化、有感染力，符合平台规范不虚假宣传。",
+    promptTemplate:
+      "商品：{{product}}\n价格优惠：{{price}}\n\n请输出一套直播话术：1) 留人开场（3句）；2) 卖点讲解（结合场景痛点）；3) 逼单话术（营造稀缺紧迫感）；4) 应对'太贵了'的话术。",
+  },
+  {
+    slug: "diet-plan",
+    name: "健身减脂食谱",
+    description: "根据目标和忌口，生成一周三餐搭配和简单运动建议。仅供参考。",
+    category: "生活实用",
+    emoji: "🥗",
+    costCredits: 2,
+    inputs: [
+      { key: "goal", label: "目标", type: "select", options: ["减脂", "增肌", "健康均衡", "控糖"], required: true },
+      { key: "info", label: "个人情况（选填）", type: "textarea", placeholder: "身高体重、忌口、有无运动基础、预算等" },
+    ],
+    systemPrompt:
+      "你是营养与健身教练，方案科学、接地气、易执行，兼顾中国人饮食习惯。必须声明：内容仅供参考，特殊疾病人群请遵医嘱。",
+    promptTemplate:
+      "目标：{{goal}}\n个人情况：{{info}}\n\n请给出：1) 一日三餐示范搭配（食材易买、做法简单）；2) 3条饮食原则；3) 适合的简单运动建议。结尾提醒仅供参考、特殊情况遵医嘱。",
+  },
 ];
 
 function genCode() {
