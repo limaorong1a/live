@@ -99,7 +99,39 @@ certbot --nginx -d 你的域名     # 自动配置 HTTPS
 
 **起步阶段（无需资质）**：默认「人工确认」模式已经能跑。用户在充值页下单后，会看到订单号和你的客服微信；用户转账给你后，你在 `/admin` 后台「充值订单」里点「确认到账」，积分自动发放。
 
-**规模化（需要资质）**：注册企业主体、申请微信支付/支付宝商户号后，在 `src/lib/payment.ts` 里实现对应的 `WechatProvider`/`AlipayProvider`（统一下单 + 回调验签），把 `.env` 的 `PAYMENT_PROVIDER` 改成 `wechat` 或 `alipay` 即可自动收款到账，订单系统无需改动。
+**自动收款（微信 / 支付宝，需企业资质）**：代码已内置微信支付 v3 Native 扫码和支付宝电脑网站支付，**无需再写代码**，配好环境变量即可。
+
+前提：你需要一个**企业主体**（个体户/公司），然后：
+
+**微信支付**（https://pay.weixin.qq.com 申请商户号）：
+1. 开通「Native 支付」产品；
+2. 在商户平台下载 API 证书，拿到：商户号、证书序列号、`apiclient_key.pem` 私钥、APIv3 密钥；
+3. `.env` 里填写并切换：
+   ```
+   PAYMENT_PROVIDER="wechat"
+   WECHAT_APPID="你的appid"
+   WECHAT_MCHID="商户号"
+   WECHAT_SERIAL_NO="证书序列号"
+   WECHAT_APIV3_KEY="32位APIv3密钥"
+   WECHAT_PRIVATE_KEY="/app/certs/apiclient_key.pem"   # 或直接粘贴 PEM 内容
+   ```
+4. 在商户平台配置支付回调地址为 `https://你的域名/api/order/notify`。
+
+**支付宝**（https://open.alipay.com 创建应用）：
+1. 开通「电脑网站支付」能力，生成应用密钥对（RSA2）；
+2. 拿到：APPID、应用私钥、支付宝公钥；
+3. `.env` 里填写并切换：
+   ```
+   PAYMENT_PROVIDER="alipay"
+   ALIPAY_APP_ID="应用APPID"
+   ALIPAY_PRIVATE_KEY="/app/certs/alipay_private.pem"  # 或粘贴 PEM
+   ALIPAY_PUBLIC_KEY="支付宝公钥PEM"
+   ```
+4. 应用里配置异步通知地址 `https://你的域名/api/order/notify`。
+
+改完 `docker compose restart web`。用户在充值页选档下单后：微信模式显示收款二维码扫码即付，支付宝模式跳转收银台；付款成功后网关回调本站，积分**自动到账**，你无需人工确认。
+
+> 注：一个站点同一时间只能启用一种网关（由 `PAYMENT_PROVIDER` 决定）。若想微信、支付宝同时提供，需要小改造成按订单选择网关——需要时告诉我。
 
 ## 六、日常运维
 
