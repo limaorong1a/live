@@ -5,6 +5,7 @@ import { getUser } from "@/lib/auth";
 import RedeemForm from "@/components/RedeemForm";
 import SkillManageButtons from "@/components/SkillManageButtons";
 import Markdown from "@/components/Markdown";
+import CheckInCard from "@/components/CheckInCard";
 
 export const dynamic = "force-dynamic";
 
@@ -46,6 +47,8 @@ export default async function AccountPage() {
           <span className="ml-1 text-base font-normal text-slate-500">积分</span>
         </p>
       </div>
+
+      <CheckInCard />
 
       <div className="card">
         <h2 className="mb-3 font-semibold text-slate-900">充值积分</h2>

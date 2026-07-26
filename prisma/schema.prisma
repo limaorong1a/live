@@ -14,6 +14,9 @@ model User {
   credits       Int          @default(20)
   isAdmin       Boolean      @default(false)
   agreedAt      DateTime? // 同意用户协议/隐私政策的时间，合规留痕
+  lastCheckInAt DateTime? // 上次签到时间（按自然日判重）
+  streak        Int          @default(0) // 连续签到天数
+  maxStreak     Int          @default(0)
   createdAt     DateTime     @default(now())
   runs          Run[]
   redeemCodes   RedeemCode[]
@@ -61,6 +64,7 @@ model Run {
   output       String   @default("")
   creditsSpent Int
   status       String   @default("running") // running | done | error | blocked
+  refineCount  Int      @default(0) // 已追问/改写次数（前若干次免费）
   ip           String?
   createdAt    DateTime @default(now())
 

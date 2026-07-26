@@ -34,8 +34,13 @@ export default function RunClient({ slug, costCredits, fields, initialValues }: 
   const [needLogin, setNeedLogin] = useState(false);
   const [needCredits, setNeedCredits] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [runId, setRunId] = useState<string | null>(null);
+  const [refineInput, setRefineInput] = useState("");
+  const [refining, setRefining] = useState(false);
   const resultRef = useRef<HTMLDivElement>(null);
   const outputBoxRef = useRef<HTMLDivElement>(null);
+
+  const QUICK_REFINES = ["更正式一些", "更简短一些", "更口语化", "换一个角度重写"];
 
   // 恢复上次因跳登录而暂存的输入
   useEffect(() => {
@@ -79,6 +84,7 @@ export default function RunClient({ slug, costCredits, fields, initialValues }: 
     setNeedCredits(false);
     setOutput("");
     setCopied(false);
+    setRunId(null);
     setRunning(true);
     // 移动端：滚动到结果区并收起键盘
     resultRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -130,6 +136,7 @@ export default function RunClient({ slug, costCredits, fields, initialValues }: 
               );
             }
             if (data.done) {
+              if (data.runId) setRunId(data.runId);
               window.dispatchEvent(new Event("sr:credits-changed"));
             }
           } catch {
@@ -141,6 +148,59 @@ export default function RunClient({ slug, costCredits, fields, initialValues }: 
       setError(e instanceof Error ? e.message : "运行失败，请重试");
     } finally {
       setRunning(false);
+    }
+  };
+
+  // 基于当前结果追问/改写，流式替换结果
+  const refine = async (instruction: string) => {
+    if (!runId || refining || running) return;
+    const text = instruction.trim();
+    if (!text) return;
+    setError(null);
+    setNeedCredits(false);
+    setRefining(true);
+    setOutput("");
+    setCopied(false);
+    resultRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    try {
+      const res = await fetch("/api/refine", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ runId, instruction: text }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        if (res.status === 402) setNeedCredits(true);
+        throw new Error(data.error || `请求失败 (${res.status})`);
+      }
+      if (!res.body) throw new Error("当前浏览器不支持流式响应");
+      setRefineInput("");
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const events = buffer.split("\n\n");
+        buffer = events.pop() ?? "";
+        for (const evt of events) {
+          const line = evt.trim();
+          if (!line.startsWith("data:")) continue;
+          try {
+            const data = JSON.parse(line.slice(5).trim());
+            if (data.delta) setOutput((o) => o + data.delta);
+            if (data.error) setError(data.error);
+            if (data.done) window.dispatchEvent(new Event("sr:credits-changed"));
+          } catch {
+            // ignore
+          }
+        }
+      }
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "改写失败，请重试");
+    } finally {
+      setRefining(false);
     }
   };
 
@@ -258,7 +318,7 @@ export default function RunClient({ slug, costCredits, fields, initialValues }: 
       </div>
 
       <div ref={resultRef}>
-        {(output || running) && (
+        {(output || running || refining) && (
           <div className="card">
             <div className="mb-3 flex items-center justify-between">
               <h2 className="font-semibold text-slate-900">
@@ -267,7 +327,7 @@ export default function RunClient({ slug, costCredits, fields, initialValues }: 
                   🤖 AI 生成
                 </span>
               </h2>
-              {output && !running && (
+              {output && !running && !refining && (
                 <div className="flex gap-2">
                   <button className="btn-ghost !py-1 text-xs" onClick={() => copy(false)}>
                     {copied ? "✅ 已复制" : "📋 复制文本"}
@@ -284,8 +344,50 @@ export default function RunClient({ slug, costCredits, fields, initialValues }: 
               ) : (
                 <p className="text-sm text-slate-400">正在连接模型…</p>
               )}
-              {running && <span className="animate-pulse text-slate-400">▍</span>}
+              {(running || refining) && (
+                <span className="animate-pulse text-slate-400">▍</span>
+              )}
             </div>
+
+            {/* 追问 / 二次编辑：结果不满意，直接让 AI 改到满意 */}
+            {runId && output && !running && (
+              <div className="mt-4 border-t border-slate-100 pt-4">
+                <p className="mb-2 text-sm font-medium text-slate-700">
+                  不满意？直接让它改（前 {2} 次免费）
+                </p>
+                <div className="mb-2 flex flex-wrap gap-2">
+                  {QUICK_REFINES.map((q) => (
+                    <button
+                      key={q}
+                      onClick={() => refine(q)}
+                      disabled={refining}
+                      className="rounded-full bg-slate-100 px-3 py-1 text-xs text-slate-600 transition hover:bg-brand-50 hover:text-brand-600 disabled:opacity-50"
+                    >
+                      {q}
+                    </button>
+                  ))}
+                </div>
+                <div className="flex gap-2">
+                  <input
+                    className="input flex-1"
+                    placeholder="或输入具体修改要求，例如：把第二段改得更打动人"
+                    value={refineInput}
+                    disabled={refining}
+                    onChange={(e) => setRefineInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") refine(refineInput);
+                    }}
+                  />
+                  <button
+                    className="btn-primary shrink-0"
+                    onClick={() => refine(refineInput)}
+                    disabled={refining || !refineInput.trim()}
+                  >
+                    {refining ? "改写中…" : "让它改"}
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>

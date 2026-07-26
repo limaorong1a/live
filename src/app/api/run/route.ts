@@ -188,7 +188,7 @@ export async function POST(req: Request) {
               data: { runsCount: { increment: 1 } },
             }),
           ]);
-          push({ done: true, credits: updatedUser.credits });
+          push({ done: true, credits: updatedUser.credits, runId: run.id });
         } catch (e) {
           // 只有上游真正失败才退款；客户端断开不会走到这里（push 吞掉了 enqueue 错误）
           if (e instanceof UpstreamError || (e instanceof Error && e.name !== "AbortError")) {
