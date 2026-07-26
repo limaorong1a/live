@@ -1,0 +1,60 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String       @id @default(cuid())
+  email        String       @unique
+  passwordHash String
+  credits      Int          @default(20)
+  isAdmin      Boolean      @default(false)
+  createdAt    DateTime     @default(now())
+  runs         Run[]
+  redeemCodes  RedeemCode[]
+}
+
+model RedeemCode {
+  id        String    @id @default(cuid())
+  code      String    @unique
+  credits   Int
+  usedBy    User?     @relation(fields: [usedById], references: [id])
+  usedById  String?
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+}
+
+model Skill {
+  id             String   @id @default(cuid())
+  slug           String   @unique
+  name           String
+  description    String
+  category       String
+  emoji          String   @default("✨")
+  inputs         String // JSON: 输入字段定义数组
+  systemPrompt   String
+  promptTemplate String // 使用 {{key}} 占位符
+  costCredits    Int      @default(1)
+  model          String   @default("deepseek-chat")
+  published      Boolean  @default(true)
+  runsCount      Int      @default(0)
+  createdAt      DateTime @default(now())
+  runs           Run[]
+}
+
+model Run {
+  id           String   @id @default(cuid())
+  user         User     @relation(fields: [userId], references: [id])
+  userId       String
+  skill        Skill    @relation(fields: [skillId], references: [id])
+  skillId      String
+  inputs       String // JSON: 用户提交的输入
+  output       String   @default("")
+  creditsSpent Int
+  status       String   @default("running") // running | done | error
+  createdAt    DateTime @default(now())
+}
