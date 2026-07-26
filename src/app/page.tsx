@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { prisma } from "@/lib/db";
+import { getUserId } from "@/lib/auth";
 import SkillExplorer, { type SkillCard } from "@/components/SkillExplorer";
 
 export const dynamic = "force-dynamic";
@@ -9,6 +10,18 @@ export default async function HomePage() {
     where: { published: true, reviewStatus: "approved" },
     orderBy: [{ category: "asc" }, { createdAt: "asc" }],
   });
+
+  // 已登录用户的收藏，置顶展示
+  const userId = await getUserId();
+  let favoriteSlugs: string[] = [];
+  if (userId) {
+    const favs = await prisma.favorite.findMany({
+      where: { userId },
+      orderBy: { createdAt: "desc" },
+    });
+    const favSet = new Set(favs.map((f) => f.skillId));
+    favoriteSlugs = skills.filter((s) => favSet.has(s.id)).map((s) => s.slug);
+  }
 
   const cards: SkillCard[] = skills.map((s) => ({
     slug: s.slug,
@@ -52,7 +65,7 @@ export default async function HomePage() {
         </div>
       </section>
 
-      <SkillExplorer skills={cards} />
+      <SkillExplorer skills={cards} favoriteSlugs={favoriteSlugs} />
     </div>
   );
 }

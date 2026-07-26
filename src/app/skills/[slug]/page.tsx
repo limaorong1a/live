@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db";
 import { getUserId } from "@/lib/auth";
 import type { InputField } from "@/lib/skills";
 import RunClient from "./RunClient";
+import FavoriteButton from "@/components/FavoriteButton";
 
 export const dynamic = "force-dynamic";
 
@@ -37,20 +38,27 @@ export default async function SkillPage({ params, searchParams }: PageProps) {
 
   const fields: InputField[] = JSON.parse(skill.inputs);
 
+  const userId = await getUserId();
+
+  // 当前用户是否已收藏
+  let favorited = false;
+  if (userId) {
+    favorited = !!(await prisma.favorite.findUnique({
+      where: { userId_skillId: { userId, skillId: skill.id } },
+    }));
+  }
+
   // 「再次使用」：从自己的历史运行记录预填输入
   let initialValues: Record<string, string> | undefined;
-  if (searchParams.prefill) {
-    const userId = await getUserId();
-    if (userId) {
-      const run = await prisma.run.findUnique({
-        where: { id: searchParams.prefill },
-      });
-      if (run && run.userId === userId && run.skillId === skill.id) {
-        try {
-          initialValues = JSON.parse(run.inputs);
-        } catch {
-          // 忽略损坏的历史输入
-        }
+  if (searchParams.prefill && userId) {
+    const run = await prisma.run.findUnique({
+      where: { id: searchParams.prefill },
+    });
+    if (run && run.userId === userId && run.skillId === skill.id) {
+      try {
+        initialValues = JSON.parse(run.inputs);
+      } catch {
+        // 忽略损坏的历史输入
       }
     }
   }
@@ -69,7 +77,7 @@ export default async function SkillPage({ params, searchParams }: PageProps) {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
-      <div className="mb-6">
+      <div className="mb-6 flex items-start justify-between gap-3">
         <div className="flex items-center gap-3">
           <span className="text-4xl">{skill.emoji}</span>
           <div>
@@ -83,6 +91,7 @@ export default async function SkillPage({ params, searchParams }: PageProps) {
             </p>
           </div>
         </div>
+        <FavoriteButton skillId={skill.id} initial={favorited} />
       </div>
       <RunClient
         slug={skill.slug}

@@ -75,6 +75,17 @@ model Run {
   @@index([userId, createdAt])
 }
 
+// 技能收藏：用户快速找回常用技能
+model Favorite {
+  id        String   @id @default(cuid())
+  userId    String
+  skillId   String
+  createdAt DateTime @default(now())
+
+  @@unique([userId, skillId])
+  @@index([userId, createdAt])
+}
+
 // 充值订单：支持可插拔支付网关（人工确认 / 微信 / 支付宝）
 model Order {
   id         String    @id @default(cuid())

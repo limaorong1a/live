@@ -14,7 +14,13 @@ export type SkillCard = {
   isCommunity: boolean;
 };
 
-export default function SkillExplorer({ skills }: { skills: SkillCard[] }) {
+export default function SkillExplorer({
+  skills,
+  favoriteSlugs = [],
+}: {
+  skills: SkillCard[];
+  favoriteSlugs?: string[];
+}) {
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState<string>("全部");
 
@@ -22,6 +28,14 @@ export default function SkillExplorer({ skills }: { skills: SkillCard[] }) {
     () => ["全部", ...Array.from(new Set(skills.map((s) => s.category)))],
     [skills]
   );
+
+  const favorites = useMemo(() => {
+    const favSet = new Set(favoriteSlugs);
+    const order = new Map(favoriteSlugs.map((s, i) => [s, i]));
+    return skills
+      .filter((s) => favSet.has(s.slug))
+      .sort((a, b) => (order.get(a.slug) ?? 0) - (order.get(b.slug) ?? 0));
+  }, [skills, favoriteSlugs]);
 
   const hot = useMemo(
     () =>
@@ -78,6 +92,17 @@ export default function SkillExplorer({ skills }: { skills: SkillCard[] }) {
           ))}
         </div>
       </div>
+
+      {favorites.length > 0 && category === "全部" && !query.trim() && (
+        <section className="mb-8">
+          <h2 className="mb-3 text-lg font-semibold text-slate-900">★ 我的收藏</h2>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {favorites.map((s) => (
+              <Card key={s.slug} skill={s} />
+            ))}
+          </div>
+        </section>
+      )}
 
       {hot.length > 0 && category === "全部" && !query.trim() && (
         <section className="mb-8">
