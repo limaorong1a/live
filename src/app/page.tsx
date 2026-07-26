@@ -11,6 +11,11 @@ export default async function HomePage() {
     orderBy: [{ category: "asc" }, { createdAt: "asc" }],
   });
 
+  const workflows = await prisma.workflow.findMany({
+    where: { published: true },
+    orderBy: { createdAt: "asc" },
+  });
+
   // 已登录用户的收藏，置顶展示
   const userId = await getUserId();
   let favoriteSlugs: string[] = [];
@@ -72,6 +77,30 @@ export default async function HomePage() {
           ))}
         </div>
       </section>
+
+      {workflows.length > 0 && (
+        <section className="mb-10">
+          <h2 className="mb-1 text-lg font-semibold text-slate-900">🚀 一键工作流</h2>
+          <p className="mb-4 text-sm text-slate-500">
+            填一次内容，多个技能自动串联,直接出成品
+          </p>
+          <div className="grid gap-4 sm:grid-cols-2">
+            {workflows.map((w) => (
+              <Link
+                key={w.slug}
+                href={`/workflows/${w.slug}`}
+                className="card border-rose-100 bg-gradient-to-br from-white to-rose-50/40 transition hover:-translate-y-0.5 hover:shadow-md"
+              >
+                <div className="flex items-center gap-2">
+                  <span className="text-2xl">{w.emoji}</span>
+                  <h3 className="font-semibold text-slate-900">{w.name}</h3>
+                </div>
+                <p className="mt-1 text-sm text-slate-500">{w.description}</p>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
 
       <SkillExplorer skills={cards} favoriteSlugs={favoriteSlugs} />
     </div>

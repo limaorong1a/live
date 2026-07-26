@@ -547,6 +547,68 @@ async function main() {
   }
   console.log(`✅ 已写入 ${skills.length} 个内置技能`);
 
+  // ========== 一键工作流：多技能自动串联出成品 ==========
+  const workflows = [
+    {
+      slug: "xhs-oneshot",
+      name: "小红书爆款一条龙",
+      description: "填一次主题，自动『生成爆款笔记 → 发布前合规体检』，直接出可发成品。",
+      emoji: "🚀",
+      category: "小红书运营",
+      inputs: [
+        { key: "topic", label: "笔记主题", type: "text", placeholder: "例如：油皮夏天不脱妆的5个技巧", required: true },
+        { key: "type", label: "笔记类型", type: "select", options: ["干货教程", "好物种草", "个人经历", "避雷测评", "情绪共鸣"], required: true },
+        { key: "points", label: "想突出的内容点（选填）", type: "textarea", placeholder: "卖点、亲身体验、数据等" },
+      ],
+      steps: [
+        {
+          skillSlug: "xhs-content",
+          title: "第1步：生成爆款笔记",
+          inputMap: { topic: "{{workflow.topic}}", type: "{{workflow.type}}", points: "{{workflow.points}}" },
+        },
+        {
+          skillSlug: "xhs-compliance",
+          title: "第2步：发布前合规体检",
+          inputMap: { title: "见下方正文", body: "{{step1}}", tags: "" },
+        },
+      ],
+    },
+    {
+      slug: "job-sprint",
+      name: "求职冲刺大礼包",
+      description: "填一次简历和岗位，自动『优化简历 → 生成面试押题』，投递面试一步到位。",
+      emoji: "🎯",
+      category: "求职就业",
+      inputs: [
+        { key: "resume", label: "你的简历内容", type: "textarea", placeholder: "把简历文字粘贴到这里", required: true },
+        { key: "target", label: "目标岗位", type: "text", placeholder: "例如：新媒体运营 / Java后端", required: true },
+      ],
+      steps: [
+        {
+          skillSlug: "resume-polish",
+          title: "第1步：优化简历",
+          inputMap: { resume: "{{workflow.resume}}", target: "{{workflow.target}}" },
+        },
+        {
+          skillSlug: "interview-prep",
+          title: "第2步：面试押题",
+          inputMap: { job: "{{workflow.target}}", company: "", experience: "{{workflow.resume}}" },
+        },
+      ],
+    },
+  ];
+
+  for (const w of workflows) {
+    const { inputs, steps, ...rest } = w;
+    const data = { ...rest, inputs: JSON.stringify(inputs), steps: JSON.stringify(steps) };
+    await prisma.workflow.upsert({
+      where: { slug: w.slug },
+      update: data,
+      create: data,
+    });
+  }
+  console.log(`✅ 已写入 ${workflows.length} 个一键工作流`);
+
   const existing = await prisma.redeemCode.count({ where: { usedById: null } });
   if (existing === 0) {
     const codes: string[] = [];

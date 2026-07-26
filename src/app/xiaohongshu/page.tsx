@@ -59,6 +59,20 @@ export default async function XiaohongshuHub() {
         </p>
       </section>
 
+      <div className="mb-8 rounded-xl border border-rose-200 bg-white p-4">
+        <Link href="/workflows/xhs-oneshot" className="flex items-center justify-between">
+          <div>
+            <h2 className="font-semibold text-slate-900">
+              🚀 懒人首选：小红书爆款一条龙
+            </h2>
+            <p className="mt-0.5 text-sm text-slate-500">
+              填一次主题，自动『生成爆款笔记 → 合规体检』，直接出可发成品
+            </p>
+          </div>
+          <span className="shrink-0 text-rose-600">一键运行 →</span>
+        </Link>
+      </div>
+
       <div className="grid gap-8">
         {STAGES.map((stage) => (
           <section key={stage.title}>

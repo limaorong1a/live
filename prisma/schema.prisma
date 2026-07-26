@@ -75,6 +75,37 @@ model Run {
   @@index([userId, createdAt])
 }
 
+// 一键工作流：把多个技能按顺序自动串成一篇成品（差异化护城河）
+model Workflow {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  name        String
+  description String
+  emoji       String   @default("🧩")
+  category    String
+  inputs      String // JSON: InputField[]（用户填一次的输入）
+  steps       String // JSON: WorkflowStep[]（每步引用一个技能 + 输入映射）
+  published   Boolean  @default(true)
+  runsCount   Int      @default(0)
+  createdAt   DateTime @default(now())
+
+  runs WorkflowRun[]
+}
+
+model WorkflowRun {
+  id           String   @id @default(cuid())
+  userId       String
+  workflow     Workflow @relation(fields: [workflowId], references: [id])
+  workflowId   String
+  inputs       String
+  output       String   @default("")
+  creditsSpent Int
+  status       String   @default("running") // running | done | error | blocked
+  createdAt    DateTime @default(now())
+
+  @@index([userId, createdAt])
+}
+
 // 技能收藏：用户快速找回常用技能
 model Favorite {
   id        String   @id @default(cuid())
