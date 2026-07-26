@@ -6,6 +6,7 @@ import RedeemForm from "@/components/RedeemForm";
 import SkillManageButtons from "@/components/SkillManageButtons";
 import Markdown from "@/components/Markdown";
 import CheckInCard from "@/components/CheckInCard";
+import InviteCard from "@/components/InviteCard";
 
 export const dynamic = "force-dynamic";
 
@@ -49,6 +50,8 @@ export default async function AccountPage() {
       </div>
 
       <CheckInCard />
+
+      <InviteCard />
 
       <div className="card">
         <h2 className="mb-3 font-semibold text-slate-900">充值积分</h2>

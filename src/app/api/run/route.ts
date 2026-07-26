@@ -5,6 +5,7 @@ import { chatStream, UpstreamError, type ChatMessage } from "@/lib/llm";
 import { renderTemplate, type InputField } from "@/lib/skills";
 import { rateLimit, clientIp } from "@/lib/ratelimit";
 import { moderateInputs, checkSensitive } from "@/lib/moderation";
+import { maybeRewardInvite } from "@/lib/invite";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -177,18 +178,25 @@ export async function POST(req: Request) {
           }
 
           // 正常完成（含客户端中途断开）：落库已生成内容并扣费成立，不退款
-          const [, updatedUser] = await prisma.$transaction([
+          await prisma.$transaction([
             prisma.run.update({
               where: { id: run.id },
               data: { output, status: "done" },
             }),
-            prisma.user.findUniqueOrThrow({ where: { id: user.id } }),
             prisma.skill.update({
               where: { id: skill.id },
               data: { runsCount: { increment: 1 } },
             }),
           ]);
-          push({ done: true, credits: updatedUser.credits, runId: run.id });
+          // 被邀请人首次成功生成：给双方发邀请奖励（幂等）
+          const inviteReward = await maybeRewardInvite(user.id).catch(() => 0);
+          const updatedUser = await prisma.user.findUniqueOrThrow({ where: { id: user.id } });
+          push({
+            done: true,
+            credits: updatedUser.credits,
+            runId: run.id,
+            inviteReward: inviteReward || undefined,
+          });
         } catch (e) {
           // 只有上游真正失败才退款；客户端断开不会走到这里（push 吞掉了 enqueue 错误）
           if (e instanceof UpstreamError || (e instanceof Error && e.name !== "AbortError")) {

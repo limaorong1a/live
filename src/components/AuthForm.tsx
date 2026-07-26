@@ -20,6 +20,7 @@ export default function AuthForm({ mode }: { mode: "login" | "register" }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const next = safeNext(searchParams.get("next"));
+  const invite = searchParams.get("invite") ?? "";
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -33,7 +34,7 @@ export default function AuthForm({ mode }: { mode: "login" | "register" }) {
       const res = await fetch(`/api/auth/${mode}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password, agreed }),
+        body: JSON.stringify({ email, password, agreed, invite }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error || "操作失败");
@@ -59,6 +60,11 @@ export default function AuthForm({ mode }: { mode: "login" | "register" }) {
         <p className="mb-5 text-sm text-slate-500">
           {mode === "login" ? "欢迎回来" : "注册即送 20 体验积分，先用起来"}
         </p>
+        {mode === "register" && invite && (
+          <p className="mb-4 rounded-lg bg-brand-50 px-3 py-2 text-sm text-brand-700">
+            🎁 好友邀请码 <b>{invite}</b> 已填入，完成首次生成后你和好友都将获得奖励积分
+          </p>
+        )}
         <form onSubmit={submit} className="grid gap-4">
           <label className="grid gap-1.5">
             <span className="text-sm font-medium text-slate-700">邮箱</span>

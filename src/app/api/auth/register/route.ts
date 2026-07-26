@@ -3,6 +3,7 @@ import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { hashPassword, createSession } from "@/lib/auth";
 import { rateLimit, clientIp } from "@/lib/ratelimit";
+import { resolveInviter } from "@/lib/invite";
 
 export const runtime = "nodejs";
 
@@ -18,6 +19,7 @@ export async function POST(req: Request) {
     typeof raw.email === "string" ? raw.email.trim().toLowerCase() : "";
   const password = typeof raw.password === "string" ? raw.password : "";
   const agreed = raw.agreed === true;
+  const inviteCode = typeof raw.invite === "string" ? raw.invite : null;
 
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     return NextResponse.json({ error: "邮箱格式不正确" }, { status: 400 });
@@ -32,12 +34,16 @@ export async function POST(req: Request) {
     );
   }
 
+  // 校验邀请码（无效则忽略，不阻断注册）
+  const invitedById = await resolveInviter(inviteCode);
+
   try {
     const user = await prisma.user.create({
       data: {
         email,
         passwordHash: await hashPassword(password),
         agreedAt: new Date(),
+        invitedById,
       },
     });
     await createSession(user.id);

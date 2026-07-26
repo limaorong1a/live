@@ -17,6 +17,10 @@ model User {
   lastCheckInAt DateTime? // 上次签到时间（按自然日判重）
   streak        Int          @default(0) // 连续签到天数
   maxStreak     Int          @default(0)
+  inviteCode    String?      @unique // 我的邀请码
+  invitedById   String? // 邀请我的人的 userId
+  firstRunRewarded Boolean   @default(false) // 是否已因首次运行发放邀请奖励
+  invitedCount  Int          @default(0) // 我成功邀请并激活的人数
   createdAt     DateTime     @default(now())
   runs          Run[]
   redeemCodes   RedeemCode[]
