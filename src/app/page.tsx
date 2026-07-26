@@ -44,6 +44,14 @@ export default async function HomePage() {
           不用懂提示词，不用 API Key。专业者调好的 AI 工作流，
           你只管填内容、拿结果，按次消耗积分。
         </p>
+        <div className="mt-4">
+          <Link
+            href="/xiaohongshu"
+            className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-rose-500 to-red-500 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:opacity-90"
+          >
+            📕 小红书博主？点这进专属运营工作台 →
+          </Link>
+        </div>
         <p className="mt-3 text-sm">
           <Link href="/create" className="text-brand-600 underline">
             我是专业者，想上架自己的技能 →

@@ -49,6 +49,9 @@ export default function Nav() {
           </span>
         </Link>
         <nav className="flex items-center gap-3 text-sm">
+          <Link href="/xiaohongshu" className="hidden font-medium text-rose-600 hover:text-rose-700 sm:inline">
+            📕 小红书工作台
+          </Link>
           <Link href="/create" className="hidden text-slate-600 hover:text-slate-900 sm:inline">
             创作技能
           </Link>

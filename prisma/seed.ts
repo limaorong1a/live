@@ -1,5 +1,6 @@
 import { PrismaClient } from "@prisma/client";
 import { randomBytes } from "crypto";
+import { XHS_COMPLIANCE_KB } from "../src/lib/knowledge/xiaohongshu-compliance";
 
 const prisma = new PrismaClient();
 
@@ -392,6 +393,137 @@ const skills: SeedSkill[] = [
       "你是营养与健身教练，方案科学、接地气、易执行，兼顾中国人饮食习惯。必须声明：内容仅供参考，特殊疾病人群请遵医嘱。",
     promptTemplate:
       "目标：{{goal}}\n个人情况：{{info}}\n\n请给出：1) 一日三餐示范搭配（食材易买、做法简单）；2) 3条饮食原则；3) 适合的简单运动建议。结尾提醒仅供参考、特殊情况遵医嘱。",
+  },
+
+  // ========== 小红书运营工作台（垂直深耕）：起号→选题→生产→过审→复盘闭环 ==========
+  {
+    slug: "xhs-positioning",
+    name: "起号定位诊断",
+    description: "输入赛道，输出账号人设定位、选题矩阵和前10篇起号选题，新手起号不迷路。",
+    category: "小红书运营",
+    emoji: "🧭",
+    costCredits: 3,
+    inputs: [
+      { key: "niche", label: "你想做的赛道 / 领域", type: "text", placeholder: "例如：平价穿搭 / 育儿好物 / 减脂餐", required: true },
+      { key: "background", label: "你的优势或背景（选填）", type: "textarea", placeholder: "例如：宝妈、95后、从事美妆行业3年" },
+    ],
+    systemPrompt:
+      "你是资深小红书起号操盘手，帮素人博主找准差异化定位。定位要具体、可执行、有记忆点，避开红海同质化。输出用 Markdown 分点。",
+    promptTemplate:
+      "赛道：{{niche}}\n我的背景：{{background}}\n\n请输出：1) 3个差异化人设定位方向（含一句话账号简介）；2) 选题矩阵（4-5个内容支柱，每个配示例选题）；3) 前10篇起号选题清单（含建议标题）；4) 起号阶段的3条避坑提醒。",
+  },
+  {
+    slug: "xhs-competitor",
+    name: "竞品爆款拆解",
+    description: "粘贴对标博主的爆款笔记，拆解钩子、结构、爆点，反推可复制的选题公式。",
+    category: "小红书运营",
+    emoji: "🔍",
+    costCredits: 3,
+    inputs: [
+      { key: "content", label: "对标爆款笔记（标题+正文）", type: "textarea", placeholder: "把对标博主的爆款笔记复制进来", required: true },
+      { key: "myniche", label: "我的赛道（选填）", type: "text", placeholder: "用于反推适合我的选题" },
+    ],
+    systemPrompt:
+      "你是小红书爆款拆解专家，擅长逆向分析爆文的底层逻辑。拆解要具体到可模仿的公式，而非泛泛而谈。",
+    promptTemplate:
+      "对标爆款：\n{{content}}\n\n我的赛道：{{myniche}}\n\n请拆解：1) 标题钩子公式（用了什么心理机制）；2) 正文结构骨架（逐段作用）；3) 引发互动/收藏的爆点设计；4) 提炼出的可复制选题公式；5) 给我的赛道套用该公式的3个选题。",
+  },
+  {
+    slug: "xhs-comments",
+    name: "评论区选题挖掘",
+    description: "喂入爆款笔记的评论区，挖掘受众真实焦虑和需求，产出下一批高潜选题。",
+    category: "小红书运营",
+    emoji: "💬",
+    costCredits: 2,
+    inputs: [
+      { key: "comments", label: "评论区内容", type: "textarea", placeholder: "复制一批评论粘贴进来（越多越准）", required: true },
+    ],
+    systemPrompt:
+      "你是用户洞察专家，擅长从评论中提炼真实痛点和未被满足的需求，转化为高潜力选题。",
+    promptTemplate:
+      "评论区内容：\n{{comments}}\n\n请输出：1) 受众高频焦虑/痛点（按提及频次排序）；2) 未被满足的需求缺口；3) 基于这些洞察的8个高潜选题（含建议标题）。",
+  },
+  {
+    slug: "xhs-content",
+    name: "爆款标题+正文生成",
+    description: "输入主题一键出爆款标题和正文，自带违禁词规避，风格贴合小红书网感。",
+    category: "小红书运营",
+    emoji: "🔥",
+    costCredits: 2,
+    inputs: [
+      { key: "topic", label: "笔记主题", type: "text", placeholder: "例如：油皮夏天不脱妆的5个技巧", required: true },
+      { key: "type", label: "笔记类型", type: "select", options: ["干货教程", "好物种草", "个人经历", "避雷测评", "情绪共鸣"], required: true },
+      { key: "points", label: "想突出的内容点（选填）", type: "textarea", placeholder: "卖点、亲身体验、数据等" },
+    ],
+    systemPrompt:
+      "你是百万粉小红书博主，文案有网感、口语化、多用 emoji、分段清晰、有钩子有互动引导。务必规避广告法绝对化用语和平台违禁词，不做站外导流。",
+    promptTemplate:
+      "主题：{{topic}}\n类型：{{type}}\n内容点：{{points}}\n\n请输出：1) 5个爆款标题（含emoji，20字内，带钩子）；2) 一篇完整正文（分段、有emoji、结尾引导点赞收藏关注）；3) 8-10个精准话题标签；4) 一句合规提示：如为AI辅助创作建议标注。",
+  },
+  {
+    slug: "xhs-cover",
+    name: "封面文案与配图脚本",
+    description: "规划9图笔记：封面大字文案、每张配图内容脚本和统一视觉风格建议。",
+    category: "小红书运营",
+    emoji: "🖼️",
+    costCredits: 2,
+    inputs: [
+      { key: "topic", label: "笔记主题", type: "text", placeholder: "例如：新手化妆步骤", required: true },
+      { key: "style", label: "想要的视觉风格", type: "select", options: ["清新ins风", "高级莫兰迪", "元气少女", "简约高级黑白", "复古胶片"], required: true },
+    ],
+    systemPrompt:
+      "你是小红书视觉策划，懂封面3秒抓眼球和图集叙事节奏。给出可直接照做的配图脚本和统一风格规范。",
+    promptTemplate:
+      "主题：{{topic}}\n风格：{{style}}\n\n请输出：1) 封面方案（大字标题文案+画面构图建议）；2) 内页9张配图脚本（每张的画面内容+文字）；3) 统一视觉规范（配色、字体、排版）让整套图风格一致。",
+  },
+  {
+    slug: "xhs-compliance",
+    name: "笔记合规体检",
+    description: "发布前一键扫描违禁词和红线，标注限流封号风险并给出可过审替代写法。护城河技能。",
+    category: "小红书运营",
+    emoji: "🛡️",
+    costCredits: 3,
+    inputs: [
+      { key: "title", label: "笔记标题", type: "text", placeholder: "把要发的标题粘进来", required: true },
+      { key: "body", label: "笔记正文", type: "textarea", placeholder: "把正文粘进来", required: true },
+      { key: "tags", label: "话题标签（选填）", type: "text", placeholder: "#话题1 #话题2" },
+    ],
+    systemPrompt:
+      "你是小红书合规审核专家，依据下方知识库逐条扫描用户笔记的违规风险，帮助博主规避限流封号。判断要具体、指出原文片段、给出可过审替代。\n\n" +
+      XHS_COMPLIANCE_KB,
+    promptTemplate:
+      "【待检测笔记】\n标题：{{title}}\n\n正文：\n{{body}}\n\n话题：{{tags}}\n\n请按知识库要求逐项体检并输出风险清单、替代写法、AI标注判定与总体结论。",
+  },
+  {
+    slug: "xhs-ai-label",
+    name: "AI标注合规助手",
+    description: "判断你的内容是否需按新规标注“AI生成”，一键生成合规声明，规避未标注扣分。",
+    category: "小红书运营",
+    emoji: "🤖",
+    costCredits: 1,
+    inputs: [
+      { key: "desc", label: "内容情况说明", type: "textarea", placeholder: "例如：封面图是AI生成的，正文是我自己写的；或：全部用AI辅助写的测评", required: true },
+    ],
+    systemPrompt:
+      "你是熟悉2026年生成式AI内容标注新规的合规顾问。依据'使用AI生成的图文视频需显著标注'的规定，判断是否需标注并给出合规声明文案。",
+    promptTemplate:
+      "内容情况：{{desc}}\n\n请输出：1) 是否需要标注AI生成（明确结论+依据）；2) 若需要，给出2条可直接用的标注声明文案（一条简短版、一条正式版）；3) 标注位置建议；4) 不标注的潜在风险提醒。",
+  },
+  {
+    slug: "xhs-analytics",
+    name: "数据复盘与迭代",
+    description: "粘贴笔记后台数据，诊断掉量断点，输出下一篇的具体优化动作清单。",
+    category: "小红书运营",
+    emoji: "📊",
+    costCredits: 2,
+    inputs: [
+      { key: "data", label: "笔记数据", type: "textarea", placeholder: "例如：曝光1.2万、点击率6%、点赞30、收藏15、评论2、涨粉3", required: true },
+      { key: "content", label: "笔记标题/主题（选填）", type: "text", placeholder: "用于结合内容分析" },
+    ],
+    systemPrompt:
+      "你是小红书数据运营专家，能从曝光/点击率/互动数据定位问题环节（封面标题/内容/引导），给出可执行的优化动作，而非空泛建议。",
+    promptTemplate:
+      "笔记数据：{{data}}\n笔记主题：{{content}}\n\n请诊断：1) 数据反映的核心问题（定位到封面标题/内容质量/互动引导哪一环）；2) 逐项优化动作清单（下一篇具体怎么改）；3) 是否值得二次翻新重发的建议。",
   },
 ];
 
