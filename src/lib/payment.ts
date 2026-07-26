@@ -3,6 +3,8 @@
 // 上层订单流程（下单、到账、加积分）完全不用改。
 
 import { randomBytes } from "crypto";
+import { WechatProvider } from "./pay/wechat";
+import { AlipayProvider } from "./pay/alipay";
 
 export type RechargePackage = {
   id: string;
@@ -49,6 +51,8 @@ export interface PaymentProvider {
   }): Promise<CreatePaymentResult>;
   /** 校验支付回调，返回商户订单号（验签通过且支付成功）或 null */
   verifyNotify(req: Request): Promise<{ outTradeNo: string } | null>;
+  /** 回调处理成功后应返回给网关的响应（不同网关要求不同报文） */
+  successResponse(): Response;
 }
 
 // 人工确认模式：下单后展示客服联系方式与订单号，用户线下付款、管理员后台确认到账
@@ -67,16 +71,20 @@ class ManualProvider implements PaymentProvider {
     // 人工模式无回调，由管理员在后台手动确认
     return null;
   }
+  successResponse(): Response {
+    return new Response(JSON.stringify({ ok: true }), {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
 }
-
-// TODO: 实现真实网关（示意）。拿到商户号后填充并在 getProvider 切换。
-// class WechatProvider implements PaymentProvider { ... 统一下单 + 验签回调 ... }
-// class AlipayProvider implements PaymentProvider { ... }
 
 export function getProvider(): PaymentProvider {
   switch (process.env.PAYMENT_PROVIDER) {
-    // case "wechat": return new WechatProvider();
-    // case "alipay": return new AlipayProvider();
+    case "wechat":
+      return new WechatProvider();
+    case "alipay":
+      return new AlipayProvider();
     default:
       return new ManualProvider();
   }

@@ -19,6 +19,7 @@ type OrderInfo = {
   credits: number;
   instructions?: string;
   payUrl?: string;
+  qrData?: string;
 };
 
 export default function RechargeCard() {
@@ -111,6 +112,13 @@ export default function RechargeCard() {
           <p className="mt-1 font-mono text-xs text-slate-500">
             订单号：{order.outTradeNo}
           </p>
+          {order.qrData && (
+            <div className="mt-3 flex flex-col items-center">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={order.qrData} alt="支付二维码" className="h-40 w-40" />
+              <p className="mt-2 text-xs text-slate-500">请用微信扫码支付</p>
+            </div>
+          )}
           {order.instructions && (
             <p className="mt-2 text-slate-600">{order.instructions}</p>
           )}
